@@ -38,7 +38,7 @@ public class ReadSummaryLambda {
     }
 
 
-    public APIGatewayProxyResponseEvent createActivity(final APIGatewayProxyRequestEvent input) throws JsonProcessingException {
+    public APIGatewayProxyResponseEvent readSummary(final APIGatewayProxyRequestEvent input) throws JsonProcessingException {
         return new APIGatewayProxyResponseEvent().withStatusCode(200).withBody(getGreenActivitySummary().toString());
     }
 
