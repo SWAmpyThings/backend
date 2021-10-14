@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ActivitySummary {
-    private BigDecimal totalElectronicBoardingPass;
-    private BigDecimal totalGreenRewardPoints;
+    private BigDecimal totalGreenRewardPointsEarned;
+    private BigDecimal totalGreenRewardPointsAvailable;
+    private BigDecimal totalLifetimePoints;
 }

@@ -10,6 +10,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import domain.GreenActivity;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Handler for requests to Lambda function.
  */
@@ -26,8 +29,16 @@ public class CreateActivityLambda {
                 .withString("bound", greenActivity.getBound())
                 .withBoolean("isElectronicBoardingPass", greenActivity.getIsElectronicBoardingPass())
                 .withInt("checkedBags", greenActivity.getCheckedBags())
+                .withInt("greenIdeas", greenActivity.getGreenIdeas())
+                .withInt("approvedGreenIdeas", greenActivity.getApprovedGreenIdeas())
                 .withPrimaryKey("activityDate", greenActivity.getActivityDate());
         activityTable.putItem(item);
-        return new APIGatewayProxyResponseEvent().withStatusCode(200).withBody("RRId " + greenActivity.getRapidRewardsNumber());
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Access-Control-Allow-Headers", "Content-Type");
+        headers.put("Access-Control-Allow-Origin", "*");
+        headers.put("Access-Control-Allow-Methods", "OPTIONS,POST,GET");
+
+        return new APIGatewayProxyResponseEvent().withStatusCode(200).withBody("RRId " + greenActivity.getRapidRewardsNumber()).withHeaders(headers);
     }
 }

@@ -13,5 +13,8 @@ public class GreenActivity {
     String bound;
     Boolean isElectronicBoardingPass;
     Integer checkedBags;
+    Integer greenIdeas;
+    Integer approvedGreenIdeas;
     String activityDate;
+
 }
