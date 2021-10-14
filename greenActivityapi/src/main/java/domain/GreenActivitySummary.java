@@ -11,12 +11,17 @@ public class GreenActivitySummary {
     Integer electronicBoardingPassRewards;
     Integer noCheckedBagRewards;
     Integer lightCarryOnRewards;
+    Integer greenIdeasRewards;
+    Integer approvedGreenIdeasRewards;
 
     @Override
     public String toString() {
-        return String.format("GreenActivitySummary: {electronicBoardingPassRewards: %d, noCheckedBagRewards: %d, lightCarryOnRewards: %d }",
+        return String.format("GreenActivitySummary: {\"electronicBoardingPassRewards\": %d, \"noCheckedBagRewards\": %d, " +
+                        "\"lightCarryOnRewards\": %d, \"greenIdeasRewards\": %d, \"approvedGreenIdeasRewards\": %d }",
                 electronicBoardingPassRewards,
                 noCheckedBagRewards,
-                lightCarryOnRewards);
+                lightCarryOnRewards,
+                greenIdeasRewards,
+                approvedGreenIdeasRewards);
     }
 }

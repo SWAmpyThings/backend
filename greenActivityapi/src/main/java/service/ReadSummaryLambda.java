@@ -7,23 +7,16 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ExecuteStatementRequest;
 import com.amazonaws.services.dynamodbv2.model.ExecuteStatementResult;
-import com.amazonaws.services.dynamodbv2.model.ExecuteTransactionRequest;
-import com.amazonaws.services.dynamodbv2.model.ExecuteTransactionResult;
 import com.amazonaws.services.dynamodbv2.model.InternalServerErrorException;
-import com.amazonaws.services.dynamodbv2.model.ItemResponse;
-import com.amazonaws.services.dynamodbv2.model.ParameterizedStatement;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
 import com.amazonaws.services.dynamodbv2.model.RequestLimitExceededException;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import domain.GreenActivitySummary;
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,22 +26,26 @@ public class ReadSummaryLambda {
 
     static AmazonDynamoDB dynamoDB = AmazonDynamoDBClientBuilder.defaultClient();
 
-    public static void main(String[] args) throws Exception {
-        System.out.println(getGreenActivitySummary());
+    public static void main(String[] args) {
+        APIGatewayProxyResponseEvent responseEvent = new ReadSummaryLambda().readSummary();
+        System.out.println(responseEvent.getHeaders());
+        System.out.println(responseEvent.getBody());
     }
 
 
-    public APIGatewayProxyResponseEvent readSummary(final APIGatewayProxyRequestEvent input) throws JsonProcessingException {
-        return new APIGatewayProxyResponseEvent().withStatusCode(200).withBody(getGreenActivitySummary().toString());
+    public APIGatewayProxyResponseEvent readSummary() {
+        return new APIGatewayProxyResponseEvent()
+                .withStatusCode(200)
+                .withBody(getGreenActivitySummary())
+                .withHeaders(corsHeaders());
     }
 
     private static String getGreenActivitySummary() {
-        GreenActivitySummary result = new GreenActivitySummary(0, 0, 0);
+        GreenActivitySummary result = new GreenActivitySummary(0, 0, 0, 0, 0);
 
         try {
             ExecuteStatementRequest request = createRequest();
             ExecuteStatementResult statementResult = dynamoDB.executeStatement(request);
-
             result = extractSummary(statementResult);
         } catch (Exception e) {
             handleCommonErrors(e);
@@ -60,21 +57,32 @@ public class ReadSummaryLambda {
     private static GreenActivitySummary extractSummary(ExecuteStatementResult result) {
         int electronicBoardingPassRewards = 0;
         int checkedBagRewards = 0;
+        int greenIdeasRewards = 0;
+        int approvedGreenIdeasRewards = 0;
+
         for (Map<String, AttributeValue> item : result.getItems()) {
-            int checkedBags = getCheckedBags(item.get("checkedBags").getN());
+            int checkedBags = getIntValue(item, "checkedBags");
             if (checkedBags == 0) {
                 checkedBagRewards += 10;
             }
-            if (item.get("isElectronicBoardingPass").getBOOL()) {
+
+            if (Boolean.TRUE.equals(item.get("isElectronicBoardingPass").getBOOL())) {
                 electronicBoardingPassRewards++;
             }
+
+            greenIdeasRewards += getIntValue(item, "greenIdeas") * 2;
+            approvedGreenIdeasRewards += getIntValue(item, "approvedGreenIdeas") * 50;
         }
 
-        return new GreenActivitySummary(electronicBoardingPassRewards, checkedBagRewards, 0);
+        return new GreenActivitySummary(electronicBoardingPassRewards, checkedBagRewards, 0, greenIdeasRewards, approvedGreenIdeasRewards);
     }
 
-    private static int getCheckedBags(String checkedBags) {
-        return Integer.parseInt(checkedBags);
+    private static int getIntValue(Map<String, AttributeValue> item, String field) {
+        try {
+            return Integer.parseInt(item.get(field).getN());
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private static ExecuteStatementRequest createRequest() {
@@ -82,7 +90,7 @@ public class ReadSummaryLambda {
         DateTime dateTime = DateTime.now().withDayOfYear(1).withTimeAtStartOfDay();
 
         // Create statements
-        request.setStatement("select  checkedBags, isElectronicBoardingPass  from GreenActivity where activityDate > ?");
+        request.setStatement("select  checkedBags, isElectronicBoardingPass, greenIdeas, approvedGreenIdeas from GreenActivity where activityDate > ?");
         AttributeValue dateAttribute = new AttributeValue(dateTime.toString("yyyy-MM-dd"));
         request.setParameters(Collections.singletonList(dateAttribute));
 
@@ -114,5 +122,14 @@ public class ReadSummaryLambda {
         } catch (Exception e) {
             System.out.println("An exception occurred, investigate and configure retry strategy. Error: " + e.getMessage());
         }
+    }
+
+    private static Map<String, String> corsHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Access-Control-Allow-Headers", "Content-Type");
+        headers.put("Access-Control-Allow-Origin", "*");
+        headers.put("Access-Control-Allow-Methods", "OPTIONS,POST,GET");
+
+        return headers;
     }
 }
