@@ -3,17 +3,14 @@ package domain;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class GreenActivity {
+@ToString
+public class GreenActivityRedemptionEvent {
     String rapidRewardsNumber;
-    String recordLocator;
-    String bound;
-    Boolean isElectronicBoardingPass;
-    Integer checkedBags;
-    Integer greenIdeas;
-    Integer approvedGreenIdeas;
     String activityDate;
+    Integer greenPoints;
 }

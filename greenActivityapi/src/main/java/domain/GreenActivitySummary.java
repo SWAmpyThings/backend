@@ -16,7 +16,7 @@ public class GreenActivitySummary {
 
     @Override
     public String toString() {
-        return String.format("GreenActivitySummary: {\"electronicBoardingPassRewards\": %d, \"noCheckedBagRewards\": %d, " +
+        return String.format("{\"electronicBoardingPassRewards\": %d, \"noCheckedBagRewards\": %d, " +
                         "\"lightCarryOnRewards\": %d, \"greenIdeasRewards\": %d, \"approvedGreenIdeasRewards\": %d }",
                 electronicBoardingPassRewards,
                 noCheckedBagRewards,

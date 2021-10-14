@@ -11,6 +11,48 @@ Globals:
     Timeout: 30
 
 Resources:
+  GreenActivityRedemptionBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+  GreenActivityRedemptionTopic:
+    Type: AWS::SNS::Topic
+  GreenActivityRedemptionFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: greenActivityapi
+      Handler: service.GreenActivityRedemptionLambda::readActivity
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt GreenActivityRedemptionTopic.TopicName
+      Runtime: java8
+      MemorySize: 512
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          GREEN_ACTIVITY_REDEMPTION_TOPIC: !Ref GreenActivityRedemptionTopic
+      Events:
+        S3Event:
+          Type: S3 # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Bucket: !Ref GreenActivityRedemptionBucket
+            Events: s3:ObjectCreated:*
+  GreenActivityStoringFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: greenActivityapi
+      Handler: service.GreenActivityStoringLambda::storeActivity
+      Runtime: java8
+      MemorySize: 512
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: GreenActivityRedemptionHistory
+      Events:
+        SNSEvent:
+          Type: SNS # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Topic: !Ref GreenActivityRedemptionTopic
   CreateActivityFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:

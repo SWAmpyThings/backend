@@ -12,6 +12,8 @@ import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededExce
 import com.amazonaws.services.dynamodbv2.model.RequestLimitExceededException;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import domain.GreenActivitySummary;
 import org.joda.time.DateTime;
 
@@ -25,6 +27,7 @@ import java.util.Map;
 public class ReadSummaryLambda {
 
     static AmazonDynamoDB dynamoDB = AmazonDynamoDBClientBuilder.defaultClient();
+    static ObjectMapper objectMapper = new ObjectMapper();
 
     public static void main(String[] args) {
         APIGatewayProxyResponseEvent responseEvent = new ReadSummaryLambda().readSummary();
@@ -51,7 +54,12 @@ public class ReadSummaryLambda {
             handleCommonErrors(e);
         }
 
-        return result.toString();
+        try {
+            return objectMapper.writeValueAsString(result);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return result.toString();
+        }
     }
 
     private static GreenActivitySummary extractSummary(ExecuteStatementResult result) {
